@@ -1,0 +1,2 @@
+# namespace.js
+JavaScript Namespace
