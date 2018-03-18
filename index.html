@@ -3,12 +3,16 @@
 	<head>
 		<meta charset="UTF-8">
 		<title>namespace.js</title>
-		<link rel="stylesheet" href="minesweeper.css">
 		<script>
 			window.NAMESPACE_SETTINGS = {
 				NAMESPACE: 'MVC',
-				reservedScopes: ['model', 'view', 'controller'],
-				define: {
+				debug: true,
+				reservedKeywords: [
+					'model', 
+					'view', 
+					'controller'
+				],
+				predefine: {
 					model: {},
 					view: {},
 					controller: {}
