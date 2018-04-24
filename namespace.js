@@ -1,5 +1,6 @@
+
 /*!
- * namespace.js v1.0.0
+ * namespace.js v1.1.0
  *
  * @ https://github.com/kritvit/namespace.js
  *
@@ -11,57 +12,48 @@
  *
  */
 
-(function Initialize () {
+(function InitNS (nsSettings) {
 
 	'use strict';
 
-	var SETTINGS = {};
+	var win 				= window,
+		keyDefine 			= 'define',
+		keyInitNS 			= 'InitNS',
+		keyGlobal 			= 'global',
+		keyNS_SETTINGS 		= 'NAMESPACE_SETTINGS',
+		keyPrototype 		= 'prototype',
+		keyConsole 			= 'console',
+		keyLength 			= 'length',
+		keyTrim 			= 'trim',
+		keyPush 			= 'push',
+		minTrue 			= !0,
+		minLogType 			= 'warn',
+		minIsAlreadyDefined = ' is already defined',
+		settings 			= isObject(nsSettings) ? nsSettings : (isObject(win[keyNS_SETTINGS]) ? win[keyNS_SETTINGS] : {}),
+		namespace 			= settings.NS || 'NS',
+		minLogDefine 		= namespace+'.'+keyDefine,
+		reservedKeywords 	= settings.reserve || [];
 
-	if (typeof NAMESPACE_SETTINGS !== 'undefined' && isObject(NAMESPACE_SETTINGS)) {
+	if (win[namespace]) {
 
-		SETTINGS = NAMESPACE_SETTINGS;
-
-	} else if (isObject(window.NAMESPACE_SETTINGS)) {
-
-		SETTINGS = window.NAMESPACE_SETTINGS;
-
-	}
-
-	var NAMESPACE 		= SETTINGS.NAMESPACE || 'NS';
-
-	var rename 			= SETTINGS.rename 	|| {},
-		remove 			= SETTINGS.remove 	|| {},
-		keyDefine 		= rename.define 	|| 'define',
-		keyInitialize 	= rename.initialize || 'Initialize',
-		keyGlobal 		= rename.global 	|| 'global';
-
-	var reservedKeywords = SETTINGS.reservedKeywords || [];
-
-	reservedKeywords.push(keyDefine);
-
-	if (window[NAMESPACE]) {
-
-		log('error', NAMESPACE+' is already defined.');
+		log(namespace+minIsAlreadyDefined);
 
 		return;
 
 	} else {
 
-		window[NAMESPACE] = new Namespace();
+		win[namespace] = new Namespace();
 
 	}
 
 	function Namespace () {
-	
-		var namespace = this,
-			key;
 
 		// Setup features
-		for (key in SETTINGS.predefine) {
+		for (var key in settings[keyDefine]) {
 
-			if (isDefined(SETTINGS.predefine[key])) {
+			if (isDefined(settings[keyDefine][key])) {
 
-				namespace[key] = SETTINGS.predefine[key];
+				this[key] = settings[keyDefine][key];
 
 			}
 
@@ -69,69 +61,67 @@
 
 	}
 
-	Namespace.prototype[keyDefine] = function define (name, value, force) {
+	reservedKeywords[keyPush](keyDefine);
+	Namespace[keyPrototype][keyDefine] = function define (name, value, force) {
+
+		if (!name || typeof name === 'string' && name[keyTrim]() === '') {
+
+			return;
+
+		}
 
 		var scope 	= this,
-			path 	= name.split('.'),
+			path 	= name[keyTrim]().split('.'),
 			isLast,
 			index;
 
-		for (index = 0; index < path.length; index++) {
+		for (index = 0; index < path[keyLength]; index++) {
 			
 			if (isReserved(path[0], force)) {
 
-				// First scope level is blocked from being added. Defined in '+NAMESPACE+'.CORE.reservedKeywords.SCOPE.
-				log('warn', NAMESPACE+'.'+keyDefine+'(\''+path[0]+'\'); is a reserved keyword.');
+				// First scope level is blocked from being added. Defined in '+namespace+'.CORE.reservedKeywords.SCOPE.
+				log(minLogDefine+'(\''+path[0]+'\') is reserved');
 
 				break;
 
+			}
+
+			isLast = path[keyLength] === index+1;
+
+			if (!isDefined(scope[path[index]])) {
+
+				// if property doesn't exist. Add new property.
+				scope[path[index]] = isLast && isDefined(value) ? value : {};
+
+				scope = scope[path[index]];
+
+			} else if (isObject(scope[path[index]]) && !isLast) {
+
+				// If property is defined and is object and not the last in loop, update scope for next loop iteration.
+				scope = scope[path[index]];
+
 			} else {
 
-				isLast = path.length === index+1;
+				var errorArray 		= path.slice(),
+					errorIndex 		= index+1,
+					errorSurplus 	= errorArray[keyLength] - errorIndex;
 
-				if (!isDefined(scope[path[index]])) {
+				errorArray.splice(errorIndex, errorSurplus);
 
-					// if property doesn't exist. Add new property.
-					scope[path[index]] = isLast && isDefined(value) ? value : {};
+				log(minLogDefine+'(\''+path.join('.')+'\')'+minIsAlreadyDefined);
 
-					scope = scope[path[index]];
-
-				} else if (isObject(scope[path[index]]) && !isLast) {
-
-					// If property is defined and is object and not the last in loop, update scope for next loop iteration.
-					scope = scope[path[index]];
-
-				} else {
-
-					var errorArray 		= path.slice(),
-						errorIndex 		= index+1,
-						errorSurplus 	= errorArray.length - errorIndex;
-
-					errorArray.splice(errorIndex, errorSurplus);
-
-					log('info', NAMESPACE+'.'+keyDefine+'(\''+path.join('.')+'\', ..); is already defined.');
-
-					break;
-				}
+				break;
 			}
+
 		}
 	};
 
-	// prototype.Initialize
-	if (remove[keyInitialize] !== true) {
-
-		reservedKeywords.push(keyInitialize);
-
-		Namespace.prototype[keyInitialize] = Initialize;
-
-	}
+	// prototype.InitNS
+	reservedKeywords[keyPush](keyInitNS);
+	Namespace[keyPrototype][keyInitNS] = InitNS;
 
 	// prototype.global
-	if (remove[keyGlobal] !== true) {
-
-		Namespace.prototype[keyGlobal] = {};
-
-	}
+	Namespace[keyPrototype][keyGlobal] = {};
 
 	function isDefined (value) {
 
@@ -141,19 +131,19 @@
 
 	function isObject (value) {
 
-		return !!(value && value.constructor === Object);
+		return (isDefined(value) && value.constructor === Object);
 
 	}
 
 	function isReserved (word, force) {
 
-		var returnVal = false;
+		var returnVal = !minTrue;
 
-		if (force !== true) {
+		if (force !== minTrue) {
 
-			for (var i = 0; i < reservedKeywords.length; i++) {
+			for (var i = 0; i < reservedKeywords[keyLength]; i++) {
 				if (reservedKeywords[i] === word) {
-					returnVal = true;
+					returnVal = minTrue;
 					break;
 				}
 			}
@@ -163,14 +153,14 @@
 		return returnVal;
 	}
 
-	function log (type, msg) {
+	function log (msg) {
 
-		if (SETTINGS.debug === true && window.console && window.console[type]) {
+		if (settings.debug === minTrue && win[keyConsole] && win[keyConsole][minLogType]) {
 
-			window.console[type](msg);
+			win[keyConsole][minLogType](msg);
 
 		}
 
 	}
 
-}());
+}(NAMESPACE_SETTINGS));
