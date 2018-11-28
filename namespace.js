@@ -1,6 +1,6 @@
 
 /*!
- * namespace.js v1.1.0
+ * namespace.js v1.1.1
  *
  * @ https://github.com/kritvit/namespace.js
  *
@@ -24,7 +24,6 @@
 		keyPrototype 		= 'prototype',
 		keyConsole 			= 'console',
 		keyLength 			= 'length',
-		keyTrim 			= 'trim',
 		keyPush 			= 'push',
 		minTrue 			= !0,
 		minLogType 			= 'warn',
@@ -62,16 +61,19 @@
 	}
 
 	reservedKeywords[keyPush](keyDefine);
+
 	Namespace[keyPrototype][keyDefine] = function define (name, value, force) {
 
-		if (!name || typeof name === 'string' && name[keyTrim]() === '') {
+		name = trim(name);
+
+		if (!name[keyLength]) {
 
 			return;
 
 		}
 
 		var scope 	= this,
-			path 	= name[keyTrim]().split('.'),
+			path 	= name.split('.'),
 			isLast,
 			index;
 
@@ -122,6 +124,12 @@
 
 	// prototype.global
 	Namespace[keyPrototype][keyGlobal] = {};
+
+	function trim (str) {
+
+		return typeof str === 'string' ? str.replace(/\s+/g, '') : '';
+
+	}
 
 	function isDefined (value) {
 
